@@ -3,10 +3,17 @@ package com.example.localnotification;
 import static androidx.core.content.ContextCompat.getSystemService;
 
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.widget.Button;
 
@@ -54,7 +61,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void sendNotification() {
+
         NotificationChannel channel = null;
+
+        Intent intent = new Intent(getApplicationContext(),MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(MainActivity.this,0,intent,PendingIntent.FLAG_IMMUTABLE);
+
+        //action button
+        Intent actionIntent = new Intent(MainActivity.this,Receiver.class);
+        actionIntent.putExtra("toast","This is a notification message");
+        PendingIntent actionPending = PendingIntent.getBroadcast(MainActivity.this,1,actionIntent,PendingIntent.FLAG_IMMUTABLE);
+
+        Intent dismissIntent = new Intent(this, DismissReceiver.class);
+        PendingIntent dismissPending = PendingIntent.getBroadcast(MainActivity.this,2, dismissIntent,PendingIntent.FLAG_IMMUTABLE);
+
+        Bitmap bitmap = BitmapFactory.decodeResource(getResources(),R.drawable.android);
+        String text = getResources().getString(R.string.big_text);
+
+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             channel = new NotificationChannel(CHANNEL_ID, MainActivity.CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH);
             NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -65,7 +89,15 @@ public class MainActivity extends AppCompatActivity {
                 .setSmallIcon(R.drawable.notification_icon)
                 .setContentTitle("Notification Title")
                 .setContentText("Notification Text")
-                .setPriority(NotificationCompat.PRIORITY_HIGH);
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .addAction(R.drawable.notification_icon,"Toast Message",actionPending)
+                .addAction(R.drawable.notification_icon,"Dismiss",dismissPending)
+                .setColor(Color.BLUE)
+                .setLargeIcon(bitmap)
+//                .setStyle(new NotificationCompat.BigPictureStyle().bigPicture(bitmap).bigLargeIcon((Bitmap) null));
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(text));
 
         compat = NotificationManagerCompat.from(MainActivity.this);
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
